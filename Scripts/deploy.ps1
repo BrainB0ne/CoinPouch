@@ -17,6 +17,7 @@ $target = Join-Path $addonsPath "CoinPouch"
 $files = @(
     "CoinPouch.lua",
     "CoinPouch.toc",
+    "LICENSE",
     "Media\CoinPouch.tga"
 )
 
