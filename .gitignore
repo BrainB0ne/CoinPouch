@@ -16,3 +16,6 @@ $RECYCLE.BIN/
 
 # Local Deploy Settings
 Scripts/deploy.local.ps1
+
+# Releases folder
+Releases/
