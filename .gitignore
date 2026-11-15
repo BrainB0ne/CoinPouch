@@ -13,3 +13,6 @@ $RECYCLE.BIN/
 
 # Local VS Code configuration
 .vscode/
+
+# Local Deploy Settings
+Scripts/deploy.local.ps1
