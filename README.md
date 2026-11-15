@@ -7,6 +7,8 @@ CoinPouch is a lightweight, movable World of Warcraft addon that keeps your char
 **Author:** BrainByteZ  
 **Current project version:** 0.8.1
 
+![CoinPouch in World of Warcraft](Assets/CoinPouch-Transparant-256x256.png)
+
 ## Features
 
 - **Money at a glance:** Displays gold, silver, and copper with familiar in-game coin icons.
