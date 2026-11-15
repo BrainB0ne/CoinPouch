@@ -4,5 +4,6 @@
 ## Author: BrainByteZ
 ## Version: 0.8.0
 ## SavedVariables: CoinPouchDB
+## IconTexture: Interface\AddOns\CoinPouch\Media\CoinPouch
 
 CoinPouch.lua
