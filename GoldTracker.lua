@@ -81,7 +81,9 @@ local function FormatMoney(amount)
     local copper = amount % 100
 
     return string.format(
-        "|cffffd700%dg|r  |cffc7c7cf%ds|r  |cffeda55f%dc|r",
+        "|cffffd700%d|r |TInterface\\MoneyFrame\\UI-GoldIcon:14:14|t  " ..
+        "|cffc7c7cf%d|r |TInterface\\MoneyFrame\\UI-SilverIcon:14:14|t  " ..
+        "|cffeda55f%d|r |TInterface\\MoneyFrame\\UI-CopperIcon:14:14|t",
         gold, silver, copper
     )
 end
