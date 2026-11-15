@@ -3,10 +3,44 @@ local addonName = ...
 local DEFAULT_X = 0
 local DEFAULT_Y = 150
 
-local frame = CreateFrame("Frame", "GoldTrackerFrame", UIParent)
+local frame = CreateFrame(
+    "Frame",
+    "GoldTrackerFrame",
+    UIParent,
+    "BackdropTemplate"
+)
 
 frame:SetSize(180, 30)
 frame:SetPoint("CENTER", UIParent, "CENTER", DEFAULT_X, DEFAULT_Y)
+
+-- Classic WoW-style background and border
+frame:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 16,
+    edgeSize = 16,
+    insets = {
+        left = 4,
+        right = 4,
+        top = 4,
+        bottom = 4
+    }
+})
+
+-- Dark background
+frame:SetBackdropColor(0.05, 0.05, 0.05, 0.85)
+
+-- Subtle golden border
+frame:SetBackdropBorderColor(0.65, 0.52, 0.30, 1)
+
+frame:SetScript("OnEnter", function(self)
+    self:SetBackdropBorderColor(1, 0.82, 0.35, 1)
+end)
+
+frame:SetScript("OnLeave", function(self)
+    self:SetBackdropBorderColor(0.65, 0.52, 0.30, 1)
+end)
 
 -- Enable dragging
 frame:EnableMouse(true)
@@ -89,7 +123,15 @@ local function FormatMoney(amount)
 end
 
 local function UpdateMoney()
+    -- Update the displayed money
     moneyText:SetText(FormatMoney(GetMoney()))
+
+    -- Calculate the required width
+    local textWidth = moneyText:GetStringWidth()
+    local padding = 24
+
+    -- Resize the frame, keeping a minimum width
+    frame:SetWidth(math.max(80, math.ceil(textWidth + padding)))
 end
 
 -- Initialize saved settings
