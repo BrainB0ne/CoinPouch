@@ -63,6 +63,8 @@ CoinPouch/
 ├── Assets/                 # Original artwork; not required in game
 ├── Media/
 │   └── CoinPouch.tga      # In-game addon icon
+├── Screenshots/
+│   └── Screenshot.png     # In-game screenshot
 ├── Scripts/
 │   ├── deploy.ps1         # Deployment script
 │   └── deploy.local.ps1   # Local paths (ignored by Git)
