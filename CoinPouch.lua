@@ -5,7 +5,7 @@ local DEFAULT_Y = 150
 
 local frame = CreateFrame(
     "Frame",
-    "GoldTrackerFrame",
+    "CoinPouchFrame",
     UIParent,
     "BackdropTemplate"
 )
@@ -79,7 +79,7 @@ local function GetBagSlotColor(freeSlots, totalSlots)
 end
 
 -- Mouse hover: highlight border and show tooltip
-local function ShowGoldTrackerTooltip()
+local function ShowCoinPouchTooltip()
     if not IsShiftKeyDown() then
         return
     end
@@ -93,7 +93,7 @@ local function ShowGoldTrackerTooltip()
     GameTooltip:SetOwner(frame, "ANCHOR_CURSOR")
     GameTooltip:ClearLines()
 
-    GameTooltip:AddLine("GoldTracker", 1, 0.82, 0)
+    GameTooltip:AddLine("CoinPouch", 1, 0.82, 0)
     GameTooltip:AddLine("Version " .. version, 0.6, 0.6, 0.6)
 
     GameTooltip:AddLine(" ")
@@ -114,7 +114,7 @@ end
 
 frame:SetScript("OnEnter", function(self)
     self:SetBackdropBorderColor(1, 0.82, 0.35, 1)
-    ShowGoldTrackerTooltip()
+    ShowCoinPouchTooltip()
 end)
 
 frame:SetScript("OnLeave", function(self)
@@ -138,15 +138,15 @@ frame:SetScript("OnDragStop", function(self)
     local parentX, parentY = UIParent:GetCenter()
 
     if not frameX or not frameY or not parentX or not parentY then
-        print("GoldTracker: Unable to determine position.")
+        print("CoinPouch: Unable to determine position.")
         return
     end
 
     local x = frameX - parentX
     local y = frameY - parentY
 
-    GoldTrackerDB.x = x
-    GoldTrackerDB.y = y
+    CoinPouchDB.x = x
+    CoinPouchDB.y = y
 
     self:ClearAllPoints()
     self:SetPoint("CENTER", UIParent, "CENTER", x, y)
@@ -228,10 +228,10 @@ end
 
 -- Initialize saved settings
 local function Initialize()
-    GoldTrackerDB = GoldTrackerDB or {}
+    CoinPouchDB = CoinPouchDB or {}
 
-    local x = GoldTrackerDB.x or DEFAULT_X
-    local y = GoldTrackerDB.y or DEFAULT_Y
+    local x = CoinPouchDB.x or DEFAULT_X
+    local y = CoinPouchDB.y or DEFAULT_Y
 
     frame:ClearAllPoints()
     frame:SetPoint("CENTER", UIParent, "CENTER", x, y)
@@ -254,7 +254,7 @@ frame:SetScript("OnEvent", function(self, event, loadedAddon)
     elseif event == "MODIFIER_STATE_CHANGED" then
         if frame:IsMouseOver() then
             if IsShiftKeyDown() then
-                ShowGoldTrackerTooltip()
+                ShowCoinPouchTooltip()
             else
                 GameTooltip:Hide()
             end
@@ -263,19 +263,19 @@ frame:SetScript("OnEvent", function(self, event, loadedAddon)
 end)
 
 -- Slash command
-SLASH_GOLDTRACKER1 = "/goldtracker"
+SLASH_COINPOUCH1 = "/coinpouch"
 
-SlashCmdList["GOLDTRACKER"] = function(msg)
+SlashCmdList["COINPOUCH"] = function(msg)
     if msg == "reset" then
-        GoldTrackerDB.x = DEFAULT_X
-        GoldTrackerDB.y = DEFAULT_Y
+        CoinPouchDB.x = DEFAULT_X
+        CoinPouchDB.y = DEFAULT_Y
 
         frame:ClearAllPoints()
         frame:SetPoint("CENTER", UIParent, "CENTER", DEFAULT_X, DEFAULT_Y)
 
-        print("|cff00ff00GoldTracker position reset!|r")
+        print("|cff00ff00CoinPouch position reset!|r")
     else
-        print("|cffffd700GoldTracker commands:|r")
-        print("/goldtracker reset - Reset tracker position")
+        print("|cffffd700CoinPouch commands:|r")
+        print("/coinpouch reset - Reset coinpouch position")
     end
 end

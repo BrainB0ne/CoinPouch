@@ -1,8 +1,8 @@
 ## Interface: 16001
-## Title: GoldTracker
+## Title: CoinPouch
 ## Notes: A lightweight, customizable money tracker
 ## Author: BrainByteZ
-## Version: 0.7.2
-## SavedVariables: GoldTrackerDB
+## Version: 0.8.0
+## SavedVariables: CoinPouchDB
 
-GoldTracker.lua
+CoinPouch.lua
