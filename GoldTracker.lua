@@ -11,7 +11,7 @@ frame:SetPoint("CENTER", UIParent, "CENTER", DEFAULT_X, DEFAULT_Y)
 -- Enable dragging
 frame:EnableMouse(true)
 frame:SetMovable(true)
-frame:RegisterForDrag("LeftButton")
+frame:RegisterForDrag("RightButton")
 
 frame:SetScript("OnDragStart", function(self)
     self:StartMoving()
@@ -36,8 +36,39 @@ frame:SetScript("OnDragStop", function(self)
 
     self:ClearAllPoints()
     self:SetPoint("CENTER", UIParent, "CENTER", x, y)
+end)
 
-    print("GoldTracker saved position:", x, y)
+-- Left-click toggles all bags
+local mouseDownX, mouseDownY
+
+frame:SetScript("OnMouseDown", function(self, button)
+    if button == "LeftButton" then
+        mouseDownX, mouseDownY = GetCursorPosition()
+    end
+end)
+
+frame:SetScript("OnMouseUp", function(self, button)
+    if button ~= "LeftButton" then
+        return
+    end
+
+    if not mouseDownX or not mouseDownY then
+        return
+    end
+
+    local mouseUpX, mouseUpY = GetCursorPosition()
+
+    local dx = mouseUpX - mouseDownX
+    local dy = mouseUpY - mouseDownY
+
+    -- Allow up to 5 pixels of mouse movement
+    local distanceSquared = dx * dx + dy * dy
+
+    if distanceSquared <= 25 then
+        ToggleAllBags()
+    end
+
+    mouseDownX, mouseDownY = nil, nil
 end)
 
 -- Create money display
@@ -102,5 +133,3 @@ SlashCmdList["GOLDTRACKER"] = function(msg)
         print("/goldtracker reset - Reset tracker position")
     end
 end
-
-print("|cff00ff00GoldTracker v0.2 loaded!|r")
