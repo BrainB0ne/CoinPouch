@@ -79,7 +79,9 @@ The deployment script copies only the required addon files. The `Assets/` direct
 
 ## License
 
-No license has been specified yet. See the repository for any future licensing information.
+CoinPouch is free software licensed under the **GNU General Public License version 3.0 only (GPL-3.0-only)**. You may use, modify, and redistribute the addon under the terms of this license. See [LICENSE](LICENSE) for the full license text.
+
+The GPL applies to the CoinPouch code and original project assets owned by the author; third-party World of Warcraft artwork, icons, and trademarks remain the property of their respective owners.
 
 ---
 
