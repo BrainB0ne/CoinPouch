@@ -34,12 +34,41 @@ frame:SetBackdropColor(0.05, 0.05, 0.05, 0.85)
 -- Subtle golden border
 frame:SetBackdropBorderColor(0.65, 0.52, 0.30, 1)
 
+local function GetAddonVersion()
+    if C_AddOns and C_AddOns.GetAddOnMetadata then
+        return C_AddOns.GetAddOnMetadata(addonName, "Version")
+    elseif GetAddOnMetadata then
+        return GetAddOnMetadata(addonName, "Version")
+    end
+
+    return "Unknown"
+end
+
+-- Mouse hover: highlight border and show tooltip
 frame:SetScript("OnEnter", function(self)
     self:SetBackdropBorderColor(1, 0.82, 0.35, 1)
+
+    -- Read version from the TOC file
+    local version = GetAddonVersion()
+
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:ClearLines()
+
+    GameTooltip:AddLine("GoldTracker", 1, 0.82, 0)
+    GameTooltip:AddLine("Version " .. version, 0.6, 0.6, 0.6)
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Left-click to toggle bags", 1, 1, 1)
+    GameTooltip:AddLine("Right-drag to move", 1, 1, 1)
+
+    GameTooltip:Show()
 end)
 
+-- Mouse leave: restore border and hide tooltip
 frame:SetScript("OnLeave", function(self)
     self:SetBackdropBorderColor(0.65, 0.52, 0.30, 1)
+
+    GameTooltip:Hide()
 end)
 
 -- Enable dragging
