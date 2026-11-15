@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: CoinPouch
-## Notes: A lightweight, customizable money tracker
+## Notes: Your gold and bag space at a glance
 ## Author: BrainByteZ
 ## Version: 0.8.0
 ## SavedVariables: CoinPouchDB
