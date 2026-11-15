@@ -35,13 +35,15 @@ frame:SetBackdropColor(0.05, 0.05, 0.05, 0.85)
 frame:SetBackdropBorderColor(0.65, 0.52, 0.30, 1)
 
 local function GetAddonVersion()
+    local version
+
     if C_AddOns and C_AddOns.GetAddOnMetadata then
-        return C_AddOns.GetAddOnMetadata(addonName, "Version")
+        version = C_AddOns.GetAddOnMetadata(addonName, "Version")
     elseif GetAddOnMetadata then
-        return GetAddOnMetadata(addonName, "Version")
+        version = GetAddOnMetadata(addonName, "Version")
     end
 
-    return "Unknown"
+    return version or "Unknown"
 end
 
 local function GetBagSlotInfo()
