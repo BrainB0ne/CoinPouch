@@ -151,29 +151,53 @@ local function FormatMoney(amount)
     )
 end
 
-local function GetEmptyBagSlots()
-    local total = 0
+local function GetBagSlotInfo()
+    local freeSlots = 0
+    local totalSlots = 0
 
     -- Backpack (0) and equipped bags (1-4)
     for bag = 0, 4 do
-        local freeSlots = C_Container.GetContainerNumFreeSlots(bag)
+        local numSlots = C_Container.GetContainerNumSlots(bag)
+        local numFree = C_Container.GetContainerNumFreeSlots(bag)
 
-        if freeSlots then
-            total = total + freeSlots
+        if numSlots and numFree then
+            totalSlots = totalSlots + numSlots
+            freeSlots = freeSlots + numFree
         end
     end
 
-    return total
+    return freeSlots, totalSlots
+end
+
+local function GetBagSlotColor(freeSlots, totalSlots)
+    if totalSlots == 0 then
+        return "ff69d36e"
+    end
+
+    local percentage = (freeSlots / totalSlots) * 100
+
+    if percentage > 25 then
+        return "ff69d36e" -- Green
+    elseif percentage >= 10 then
+        return "ffffd700" -- Yellow
+    else
+        return "ffff4040" -- Red
+    end
 end
 
 local function UpdateMoney()
     local money = FormatMoney(GetMoney())
-    local emptySlots = GetEmptyBagSlots()
 
+    -- Get inventory capacity
+    local freeSlots, totalSlots = GetBagSlotInfo()
+    local bagColor = GetBagSlotColor(freeSlots, totalSlots)
+
+    -- Format money and inventory display
     local display = string.format(
-        "%s  |cff69d36e%d|r |TInterface\\Icons\\INV_Misc_Bag_08:14:14|t",
+        "%s  |c%s%d|r |TInterface\\Icons\\INV_Misc_Bag_08:14:14|t",
         money,
-        emptySlots
+        bagColor,
+        freeSlots
     )
 
     moneyText:SetText(display)
