@@ -1,0 +1,7 @@
+## Interface: 16001
+## Title: GoldTracker
+## Notes: A lightweight, customizable money tracker
+## Author: BrainByteZ
+## Version: 0.1.0
+
+GoldTracker.lua
