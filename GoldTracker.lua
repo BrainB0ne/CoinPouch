@@ -151,15 +151,37 @@ local function FormatMoney(amount)
     )
 end
 
-local function UpdateMoney()
-    -- Update the displayed money
-    moneyText:SetText(FormatMoney(GetMoney()))
+local function GetEmptyBagSlots()
+    local total = 0
 
-    -- Calculate the required width
+    -- Backpack (0) and equipped bags (1-4)
+    for bag = 0, 4 do
+        local freeSlots = C_Container.GetContainerNumFreeSlots(bag)
+
+        if freeSlots then
+            total = total + freeSlots
+        end
+    end
+
+    return total
+end
+
+local function UpdateMoney()
+    local money = FormatMoney(GetMoney())
+    local emptySlots = GetEmptyBagSlots()
+
+    local display = string.format(
+        "%s  |cff69d36e%d|r |TInterface\\Icons\\INV_Misc_Bag_08:14:14|t",
+        money,
+        emptySlots
+    )
+
+    moneyText:SetText(display)
+
+    -- Automatically adjust widget width
     local textWidth = moneyText:GetStringWidth()
     local padding = 24
 
-    -- Resize the frame, keeping a minimum width
     frame:SetWidth(math.max(80, math.ceil(textWidth + padding)))
 end
 
@@ -179,12 +201,13 @@ end
 -- Events
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_MONEY")
+frame:RegisterEvent("BAG_UPDATE_DELAYED")
 
 frame:SetScript("OnEvent", function(self, event, loadedAddon)
     if event == "ADDON_LOADED" and loadedAddon == addonName then
         Initialize()
         self:UnregisterEvent("ADDON_LOADED")
-    elseif event == "PLAYER_MONEY" then
+    elseif event == "PLAYER_MONEY" or event == "BAG_UPDATE_DELAYED" then
         UpdateMoney()
     end
 end)
