@@ -2,6 +2,7 @@
 ## Title: GoldTracker
 ## Notes: A lightweight, customizable money tracker
 ## Author: BrainByteZ
-## Version: 0.1.0
+## Version: 0.2.0
+## SavedVariables: GoldTrackerDB
 
 GoldTracker.lua
