@@ -1,8 +1,8 @@
-## Interface: 16001
+## Interface: 120105, 16001
 ## Title: CoinPouch
 ## Notes: Your gold and bag space at a glance
 ## Author: BrainByteZ
-## Version: 0.8.1
+## Version: 0.8.2
 ## SavedVariables: CoinPouchDB
 ## IconTexture: Interface\AddOns\CoinPouch\Media\CoinPouch
 

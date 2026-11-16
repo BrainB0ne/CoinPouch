@@ -2,10 +2,10 @@
 
 **Your gold and bag space at a glance.**
 
-CoinPouch is a lightweight, movable World of Warcraft addon that keeps your character's money and available bag space visible without opening your bags. Designed for **WoW Forever**.
+CoinPouch is a lightweight, movable World of Warcraft addon that keeps your character's money and available bag space visible without opening your bags. Compatible with both **WoW Retail** and **WoW Forever**.
 
 **Author:** BrainByteZ  
-**Current project version:** 0.8.1
+**Current project version:** 0.8.2
 
 ![CoinPouch in World of Warcraft](Assets/CoinPouch-Transparant-256x256.png)
 
@@ -77,15 +77,37 @@ CoinPouch/
 
 ### Deploy from VS Code
 
-The local development setup uses a VS Code build task and PowerShell:
+The local development setup uses VS Code build tasks and PowerShell to deploy CoinPouch to **WoW Forever**, **WoW Retail**, or both.
 
-1. Set your local WoW AddOns directory in `Scripts/deploy.local.ps1`.
-2. In VS Code, press **Ctrl+Shift+B** to run **Deploy CoinPouch**.
-3. In game, type `/reload` to test Lua changes.
+1. Configure your local WoW AddOns directories in `Scripts/deploy.local.ps1`:
 
-The deployment script copies only the required addon files. The `Assets/` directory, local configuration, and Git metadata stay out of the game installation.
+   ```powershell
+   $AddonPaths = @{
+       Forever = "C:\Path\To\WoW\_forever_\Interface\AddOns"
+       Retail  = "C:\Path\To\WoW\_retail_\Interface\AddOns"
+   }
+   ```
 
-> `Scripts/deploy.local.ps1` should be listed in `.gitignore` because it contains a machine-specific installation path.
+2. In VS Code, press **Ctrl+Shift+B** to deploy to **WoW Forever** (the default build task).
+
+3. To deploy to another client, select **Terminal → Run Task** and choose:
+   - **Deploy CoinPouch (Forever)** — Deploy to WoW Forever.
+   - **Deploy CoinPouch (Retail)** — Deploy to WoW Retail.
+   - **Deploy CoinPouch (All)** — Deploy to both clients.
+
+4. In the target game client, type `/reload` to test Lua changes.
+
+Alternatively, run the deployment script directly from PowerShell:
+
+```powershell
+.\Scripts\deploy.ps1 -Client Forever
+.\Scripts\deploy.ps1 -Client Retail
+.\Scripts\deploy.ps1 -Client All
+```
+
+The deployment script copies only the required addon files, including `LICENSE`. The `Assets/` directory, local configuration, development scripts, and Git metadata stay out of the game installations.
+
+> **Note:** `Scripts/deploy.local.ps1` must be listed in `.gitignore` because it contains machine-specific installation paths.
 
 ## License
 

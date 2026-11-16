@@ -1,50 +1,56 @@
+param(
+    [ValidateSet("Forever", "Retail", "All")]
+    [string]$Client = "Forever"
+)
 
 $ErrorActionPreference = "Stop"
 
-# Source: repository root
-$source = Split-Path -Parent $PSScriptRoot
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
+$LocalConfig = Join-Path $PSScriptRoot "deploy.local.ps1"
 
-$configFile = Join-Path $PSScriptRoot "deploy.local.ps1"
-
-if (-not (Test-Path -LiteralPath $configFile)) {
-    throw "Missing local configuration: $configFile"
+if (-not (Test-Path $LocalConfig)) {
+    throw "Missing local configuration: $LocalConfig"
 }
 
-. $configFile
+. $LocalConfig
 
-$target = Join-Path $addonsPath "CoinPouch"
+$Clients = if ($Client -eq "All") {
+    @("Forever", "Retail")
+} else {
+    @($Client)
+}
 
-$files = @(
+$Files = @(
     "CoinPouch.lua",
     "CoinPouch.toc",
     "LICENSE",
     "Media\CoinPouch.tga"
 )
 
-Write-Host "Deploying CoinPouch..." -ForegroundColor Cyan
+foreach ($TargetClient in $Clients) {
+    $AddOnsPath = $AddonPaths[$TargetClient]
 
-if (-not (Test-Path -LiteralPath $addonsPath -PathType Container)) {
-    throw "WoW AddOns directory not found: $addonsPath"
-}
-
-foreach ($file in $files) {
-    $from = Join-Path $source $file
-    $to = Join-Path $target $file
-
-    if (-not (Test-Path -LiteralPath $from -PathType Leaf)) {
-        throw "Missing source file: $from"
+    if (-not $AddOnsPath -or -not (Test-Path $AddOnsPath -PathType Container)) {
+        throw "Invalid AddOns path for ${TargetClient}: $AddOnsPath"
     }
+
+    $Destination = Join-Path $AddOnsPath "CoinPouch"
+
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+
+    foreach ($File in $Files) {
+        $Source = Join-Path $ProjectRoot $File
+        $Target = Join-Path $Destination $File
+
+        if (-not (Test-Path $Source -PathType Leaf)) {
+            throw "Missing source file: $Source"
+        }
+
+        $TargetDirectory = Split-Path -Parent $Target
+        New-Item -ItemType Directory -Path $TargetDirectory -Force | Out-Null
+
+        Copy-Item -LiteralPath $Source -Destination $Target -Force
+    }
+
+    Write-Host "CoinPouch deployed to $TargetClient" -ForegroundColor Green
 }
-
-foreach ($file in $files) {
-    $from = Join-Path $source $file
-    $to = Join-Path $target $file
-
-    $directory = Split-Path -Parent $to
-    New-Item -ItemType Directory -Path $directory -Force | Out-Null
-
-    Copy-Item -LiteralPath $from -Destination $to -Force
-    Write-Host "  Copied $file" -ForegroundColor Green
-}
-
-Write-Host "CoinPouch deployed successfully!" -ForegroundColor Green
