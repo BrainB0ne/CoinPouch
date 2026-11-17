@@ -2,6 +2,9 @@ local addonName = ...
 
 local DEFAULT_X = 0
 local DEFAULT_Y = 150
+local DEFAULT_SCALE = 1
+local MIN_SCALE = 0.5
+local MAX_SCALE = 2.0
 
 local frame = CreateFrame(
     "Frame",
@@ -124,6 +127,59 @@ frame:SetScript("OnLeave", function(self)
     GameTooltip:Hide()
 end)
 
+-- Keep the complete widget inside the visible UIParent area.
+-- Offsets passed to SetPoint are in the widget's scaled coordinate space.
+local SCREEN_MARGIN = 8
+
+local function KeepOnScreen()
+    if not CoinPouchDB then return end
+
+    -- GetLeft/Right/Top/Bottom return coordinates in each frame's
+    -- effective-scale space. Convert to physical UI pixels first.
+    local frameScale = frame:GetEffectiveScale()
+    local parentScale = UIParent:GetEffectiveScale()
+    if frameScale <= 0 or parentScale <= 0 then return end
+
+    local left, right = frame:GetLeft(), frame:GetRight()
+    local bottom, top = frame:GetBottom(), frame:GetTop()
+    local parentLeft, parentRight = UIParent:GetLeft(), UIParent:GetRight()
+    local parentBottom, parentTop = UIParent:GetBottom(), UIParent:GetTop()
+    if not (left and right and bottom and top and
+            parentLeft and parentRight and parentBottom and parentTop) then
+        return
+    end
+
+    -- Compare actual displayed bounds, rather than estimating the bounds
+    -- from the saved position. This avoids a second inward correction on reload.
+    local dx, dy = 0, 0
+    local minX = parentLeft * parentScale + SCREEN_MARGIN * parentScale
+    local maxX = parentRight * parentScale - SCREEN_MARGIN * parentScale
+    local minY = parentBottom * parentScale + SCREEN_MARGIN * parentScale
+    local maxY = parentTop * parentScale - SCREEN_MARGIN * parentScale
+    local leftPx, rightPx = left * frameScale, right * frameScale
+    local bottomPx, topPx = bottom * frameScale, top * frameScale
+
+    if leftPx < minX then
+        dx = minX - leftPx
+    elseif rightPx > maxX then
+        dx = maxX - rightPx
+    end
+    if bottomPx < minY then
+        dy = minY - bottomPx
+    elseif topPx > maxY then
+        dy = maxY - topPx
+    end
+
+    if dx == 0 and dy == 0 then return end
+
+    -- SetPoint offsets use the widget's scale, so convert pixel deltas.
+    local x = (CoinPouchDB.x or DEFAULT_X) + dx / frameScale
+    local y = (CoinPouchDB.y or DEFAULT_Y) + dy / frameScale
+    CoinPouchDB.x, CoinPouchDB.y = x, y
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", UIParent, "CENTER", x, y)
+end
+
 -- Enable dragging
 frame:EnableMouse(true)
 frame:SetMovable(true)
@@ -144,14 +200,15 @@ frame:SetScript("OnDragStop", function(self)
         return
     end
 
-    local x = frameX - parentX
-    local y = frameY - parentY
+    -- GetCenter() values are expressed in each frame's own scaled coordinates.
+    -- SetPoint() offsets are expressed in CoinPouch's coordinate system.
+    local scaleRatio = self:GetEffectiveScale() / UIParent:GetEffectiveScale()
+    local x = frameX - parentX / scaleRatio
+    local y = frameY - parentY / scaleRatio
 
     CoinPouchDB.x = x
     CoinPouchDB.y = y
-
-    self:ClearAllPoints()
-    self:SetPoint("CENTER", UIParent, "CENTER", x, y)
+    KeepOnScreen()
 end)
 
 -- Left-click toggles all bags
@@ -226,6 +283,7 @@ local function UpdateMoney()
     local padding = 24
 
     frame:SetWidth(math.max(80, math.ceil(textWidth + padding)))
+    KeepOnScreen()
 end
 
 -- Initialize saved settings
@@ -235,10 +293,16 @@ local function Initialize()
     local x = CoinPouchDB.x or DEFAULT_X
     local y = CoinPouchDB.y or DEFAULT_Y
 
+    local scale = tonumber(CoinPouchDB.scale) or DEFAULT_SCALE
+    scale = math.max(MIN_SCALE, math.min(MAX_SCALE, scale))
+    CoinPouchDB.scale = scale
+    frame:SetScale(scale)
+
     frame:ClearAllPoints()
     frame:SetPoint("CENTER", UIParent, "CENTER", x, y)
 
     UpdateMoney()
+    KeepOnScreen()
 end
 
 -- Events
@@ -246,6 +310,8 @@ frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_MONEY")
 frame:RegisterEvent("BAG_UPDATE_DELAYED")
 frame:RegisterEvent("MODIFIER_STATE_CHANGED")
+frame:RegisterEvent("UI_SCALE_CHANGED")
+frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
 
 frame:SetScript("OnEvent", function(self, event, loadedAddon)
     if event == "ADDON_LOADED" and loadedAddon == addonName then
@@ -253,6 +319,8 @@ frame:SetScript("OnEvent", function(self, event, loadedAddon)
         self:UnregisterEvent("ADDON_LOADED")
     elseif event == "PLAYER_MONEY" or event == "BAG_UPDATE_DELAYED" then
         UpdateMoney()
+    elseif event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
+        KeepOnScreen()
     elseif event == "MODIFIER_STATE_CHANGED" then
         if frame:IsMouseOver() then
             if IsShiftKeyDown() then
@@ -264,17 +332,37 @@ frame:SetScript("OnEvent", function(self, event, loadedAddon)
     end
 end)
 
+-- Shared API used by the settings panel.
+local function SetScale(scale)
+    scale = tonumber(scale) or DEFAULT_SCALE
+    scale = math.max(MIN_SCALE, math.min(MAX_SCALE, scale))
+    CoinPouchDB = CoinPouchDB or {}
+    CoinPouchDB.scale = scale
+    frame:SetScale(scale)
+    KeepOnScreen()
+end
+
+local function ResetPosition()
+    CoinPouchDB = CoinPouchDB or {}
+    CoinPouchDB.x = DEFAULT_X
+    CoinPouchDB.y = DEFAULT_Y
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", UIParent, "CENTER", DEFAULT_X, DEFAULT_Y)
+end
+
+_G.CoinPouchAPI = {
+    GetScale = function() return frame:GetScale() end,
+    SetScale = SetScale,
+    ResetScale = function() SetScale(DEFAULT_SCALE) end,
+    ResetPosition = ResetPosition,
+}
+
 -- Slash command
 SLASH_COINPOUCH1 = "/coinpouch"
 
 SlashCmdList["COINPOUCH"] = function(msg)
     if msg == "reset" then
-        CoinPouchDB.x = DEFAULT_X
-        CoinPouchDB.y = DEFAULT_Y
-
-        frame:ClearAllPoints()
-        frame:SetPoint("CENTER", UIParent, "CENTER", DEFAULT_X, DEFAULT_Y)
-
+        ResetPosition()
         print("|cff00ff00CoinPouch position reset!|r")
     else
         print("|cffffd700CoinPouch commands:|r")

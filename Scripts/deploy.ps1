@@ -5,6 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$AddonName = "CoinPouch"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $LocalConfig = Join-Path $PSScriptRoot "deploy.local.ps1"
 
@@ -21,10 +22,11 @@ $Clients = if ($Client -eq "All") {
 }
 
 $Files = @(
-    "CoinPouch.lua",
-    "CoinPouch.toc",
+    "$AddonName.lua",
+    "${AddonName}Settings.lua",
+    "$AddonName.toc",
     "LICENSE",
-    "Media\CoinPouch.tga"
+    "Media\$AddonName.tga"
 )
 
 foreach ($TargetClient in $Clients) {

@@ -28,6 +28,7 @@ if ($version -notmatch '^[0-9A-Za-z][0-9A-Za-z._-]*$') {
 
 $files = @(
     "$addonName.lua",
+    "${addonName}Settings.lua",
     "$addonName.toc",
     "LICENSE",
     "Media\$addonName.tga"
