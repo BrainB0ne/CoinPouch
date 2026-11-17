@@ -72,7 +72,8 @@ CoinPouch/
 │   └── Screenshot.png     # In-game screenshot
 ├── Scripts/
 │   ├── deploy.ps1         # Deployment script
-│   └── deploy.local.ps1   # Local paths (ignored by Git)
+│   ├── deploy.local.ps1   # Local paths (ignored by Git)
+│   └── package.ps1        # Release script
 ├── CoinPouch.lua
 ├── CoinPouchSettings.lua
 ├── CoinPouch.toc
