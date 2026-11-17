@@ -74,6 +74,7 @@ CoinPouch/
 │   ├── deploy.ps1         # Deployment script
 │   └── deploy.local.ps1   # Local paths (ignored by Git)
 ├── CoinPouch.lua
+├── CoinPouchSettings.lua
 ├── CoinPouch.toc
 └── README.md
 ```
