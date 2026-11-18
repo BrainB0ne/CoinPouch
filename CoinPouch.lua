@@ -506,15 +506,28 @@ _G.CoinPouchAPI = {
     end,
 }
 
--- Slash command
+-- Slash commands
 SLASH_COINPOUCH1 = "/coinpouch"
 
 SlashCmdList["COINPOUCH"] = function(msg)
+    msg = (msg or ""):lower():match("^%s*(.-)%s*$")
+
     if msg == "reset" then
         ResetPosition()
         print("|cff00ff00CoinPouch position reset!|r")
+
+    elseif msg == "settings" then
+        if Settings and Settings.OpenToCategory then
+            Settings.OpenToCategory("CoinPouch")
+        elseif InterfaceOptionsFrame_OpenToCategory then
+            InterfaceOptionsFrame_OpenToCategory("CoinPouchSettingsPanel")
+        else
+            print("|cffff4040CoinPouch: Unable to open settings.|r")
+        end
+
     else
         print("|cffffd700CoinPouch commands:|r")
-        print("/coinpouch reset - Reset coinpouch position")
+        print("/coinpouch reset - Reset widget position")
+        print("/coinpouch settings - Open addon settings")
     end
 end

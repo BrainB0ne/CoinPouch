@@ -5,7 +5,7 @@
 CoinPouch is a lightweight, movable World of Warcraft addon that keeps your character's money and available bag space visible without opening your bags. Compatible with both **WoW Retail** and **WoW Forever**.
 
 **Author:** BrainByteZ  
-**Current project version:** 0.10.0
+**Current project version:** 0.10.1
 
 ![CoinPouch in World of Warcraft](Assets/CoinPouch-Transparant-256x256.png)
 
@@ -55,13 +55,21 @@ The widget appears near the center of the screen by default. Right-drag it to yo
 
 ## Configuration
 
-CoinPouch works out of the box. Its position is stored using WoW's `CoinPouchDB` SavedVariables table.
+CoinPouch works out of the box. Your preferences, including widget position, scale, bag-space color thresholds, and special bag visibility, are saved between sessions using WoW's `CoinPouchDB` SavedVariables table.
 
-To restore the default position, enter:
+To customize CoinPouch, open **Options → AddOns → CoinPouch**, or enter:
+
+```text
+/coinpouch settings
+```
+
+To restore the default widget position, enter:
 
 ```text
 /coinpouch reset
 ```
+
+The settings page also provides dedicated buttons to reset widget scale, position, and bag-space color thresholds.
 
 ## Development
 
