@@ -183,6 +183,10 @@ end)
 if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
     local category = Settings.RegisterCanvasLayoutCategory(panel, "CoinPouch")
     Settings.RegisterAddOnCategory(category)
+
+    -- Make the registered category available to slash commands.
+    api.settingsCategoryID = category:GetID()
+
 elseif InterfaceOptions_AddCategory then
     InterfaceOptions_AddCategory(panel)
 end

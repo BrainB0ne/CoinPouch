@@ -517,10 +517,15 @@ SlashCmdList["COINPOUCH"] = function(msg)
         print("|cff00ff00CoinPouch position reset!|r")
 
     elseif msg == "settings" then
-        if Settings and Settings.OpenToCategory then
-            Settings.OpenToCategory("CoinPouch")
+        if Settings and Settings.OpenToCategory and
+        _G.CoinPouchAPI.settingsCategoryID then
+
+            Settings.OpenToCategory(_G.CoinPouchAPI.settingsCategoryID)
+
         elseif InterfaceOptionsFrame_OpenToCategory then
-            InterfaceOptionsFrame_OpenToCategory("CoinPouchSettingsPanel")
+            InterfaceOptionsFrame_OpenToCategory(
+                _G.CoinPouchSettingsPanel
+            )
         else
             print("|cffff4040CoinPouch: Unable to open settings.|r")
         end
