@@ -18,7 +18,7 @@ version:SetText("Version " .. (addonVersion or "Unknown"))
 
 local description = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 description:SetPoint("TOPLEFT", version, "BOTTOMLEFT", 0, -12)
-description:SetText("Customize the size and position of your CoinPouch widget.")
+description:SetText("Customize the size, position, and bag-space colors of your CoinPouch widget.")
 
 local scaleLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 scaleLabel:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -32)
@@ -77,7 +77,83 @@ resetPosition:SetScript("OnClick", function()
     api.ResetPosition()
 end)
 
-panel:SetScript("OnShow", RefreshScale)
+-- Bag-space color thresholds. Keep the red threshold <= yellow threshold.
+local bagColorsLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+bagColorsLabel:SetPoint("TOPLEFT", resetPosition, "BOTTOMLEFT", 0, -32)
+bagColorsLabel:SetText("Bag Space Colors")
+
+local redLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+redLabel:SetPoint("TOPLEFT", bagColorsLabel, "BOTTOMLEFT", 0, -18)
+redLabel:SetText("Red below")
+
+local redSlider = CreateFrame("Slider", "CoinPouchRedThresholdSlider", panel, "OptionsSliderTemplate")
+redSlider:SetPoint("TOPLEFT", redLabel, "BOTTOMLEFT", 0, -20)
+redSlider:SetWidth(260)
+redSlider:SetMinMaxValues(0, 100)
+redSlider:SetValueStep(1)
+if redSlider.SetObeyStepOnDrag then redSlider:SetObeyStepOnDrag(true) end
+_G[redSlider:GetName() .. "Low"]:SetText("0%")
+_G[redSlider:GetName() .. "High"]:SetText("100%")
+_G[redSlider:GetName() .. "Text"]:SetText("")
+
+local redValue = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+redValue:SetPoint("LEFT", redSlider, "RIGHT", 18, 0)
+
+local yellowLabel = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+yellowLabel:SetPoint("TOPLEFT", redSlider, "BOTTOMLEFT", 0, -24)
+yellowLabel:SetText("Yellow through")
+
+local yellowSlider = CreateFrame("Slider", "CoinPouchYellowThresholdSlider", panel, "OptionsSliderTemplate")
+yellowSlider:SetPoint("TOPLEFT", yellowLabel, "BOTTOMLEFT", 0, -20)
+yellowSlider:SetWidth(260)
+yellowSlider:SetMinMaxValues(0, 100)
+yellowSlider:SetValueStep(1)
+if yellowSlider.SetObeyStepOnDrag then yellowSlider:SetObeyStepOnDrag(true) end
+_G[yellowSlider:GetName() .. "Low"]:SetText("0%")
+_G[yellowSlider:GetName() .. "High"]:SetText("100%")
+_G[yellowSlider:GetName() .. "Text"]:SetText("")
+
+local yellowValue = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+yellowValue:SetPoint("LEFT", yellowSlider, "RIGHT", 18, 0)
+
+local updatingThresholdSliders = false
+local function RefreshThresholds()
+    local red, yellow = api.GetThresholds()
+    updatingThresholdSliders = true
+    redSlider:SetValue(red)
+    yellowSlider:SetValue(yellow)
+    updatingThresholdSliders = false
+    redValue:SetText(red .. "%")
+    yellowValue:SetText(yellow .. "%")
+end
+
+redSlider:SetScript("OnValueChanged", function(self, value)
+    if updatingThresholdSliders then return end
+    local _, yellow = api.GetThresholds()
+    api.SetThresholds(math.min(math.floor(value + 0.5), yellow), yellow)
+    RefreshThresholds()
+end)
+
+yellowSlider:SetScript("OnValueChanged", function(self, value)
+    if updatingThresholdSliders then return end
+    local red = api.GetThresholds()
+    api.SetThresholds(red, math.max(math.floor(value + 0.5), red))
+    RefreshThresholds()
+end)
+
+local resetThresholds = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+resetThresholds:SetSize(150, 26)
+resetThresholds:SetPoint("TOPLEFT", yellowSlider, "BOTTOMLEFT", 0, -30)
+resetThresholds:SetText("Reset Thresholds")
+resetThresholds:SetScript("OnClick", function()
+    api.ResetThresholds()
+    RefreshThresholds()
+end)
+
+panel:SetScript("OnShow", function()
+    RefreshScale()
+    RefreshThresholds()
+end)
 
 if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
     local category = Settings.RegisterCanvasLayoutCategory(panel, "CoinPouch")

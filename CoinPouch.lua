@@ -5,6 +5,8 @@ local DEFAULT_Y = 150
 local DEFAULT_SCALE = 1
 local MIN_SCALE = 0.5
 local MAX_SCALE = 2.0
+local DEFAULT_RED_THRESHOLD = 10
+local DEFAULT_YELLOW_THRESHOLD = 25
 
 local frame = CreateFrame(
     "Frame",
@@ -67,6 +69,12 @@ local function GetBagSlotInfo()
     return freeSlots, totalSlots
 end
 
+local function GetThresholds()
+    local red = CoinPouchDB and CoinPouchDB.redThreshold or DEFAULT_RED_THRESHOLD
+    local yellow = CoinPouchDB and CoinPouchDB.yellowThreshold or DEFAULT_YELLOW_THRESHOLD
+    return red, yellow
+end
+
 local function GetBagSlotColor(freeSlots, totalSlots)
     if totalSlots == 0 then
         return "ff69d36e"
@@ -74,9 +82,11 @@ local function GetBagSlotColor(freeSlots, totalSlots)
 
     local percentage = (freeSlots / totalSlots) * 100
 
-    if percentage > 25 then
+    local red, yellow = GetThresholds()
+
+    if percentage > yellow then
         return "ff69d36e" -- Green
-    elseif percentage >= 10 then
+    elseif percentage >= red then
         return "ffffd700" -- Yellow
     else
         return "ffff4040" -- Red
@@ -290,6 +300,13 @@ end
 local function Initialize()
     CoinPouchDB = CoinPouchDB or {}
 
+    local red = tonumber(CoinPouchDB.redThreshold) or DEFAULT_RED_THRESHOLD
+    local yellow = tonumber(CoinPouchDB.yellowThreshold) or DEFAULT_YELLOW_THRESHOLD
+    red = math.max(0, math.min(100, math.floor(red + 0.5)))
+    yellow = math.max(red, math.min(100, math.floor(yellow + 0.5)))
+    CoinPouchDB.redThreshold = red
+    CoinPouchDB.yellowThreshold = yellow
+
     local x = CoinPouchDB.x or DEFAULT_X
     local y = CoinPouchDB.y or DEFAULT_Y
 
@@ -332,6 +349,18 @@ frame:SetScript("OnEvent", function(self, event, loadedAddon)
     end
 end)
 
+-- Bag-space color thresholds (whole percentages).
+local function SetThresholds(red, yellow)
+    CoinPouchDB = CoinPouchDB or {}
+    red = tonumber(red) or DEFAULT_RED_THRESHOLD
+    yellow = tonumber(yellow) or DEFAULT_YELLOW_THRESHOLD
+    red = math.max(0, math.min(100, math.floor(red + 0.5)))
+    yellow = math.max(red, math.min(100, math.floor(yellow + 0.5)))
+    CoinPouchDB.redThreshold = red
+    CoinPouchDB.yellowThreshold = yellow
+    UpdateMoney()
+end
+
 -- Shared API used by the settings panel.
 local function SetScale(scale)
     scale = tonumber(scale) or DEFAULT_SCALE
@@ -355,6 +384,11 @@ _G.CoinPouchAPI = {
     SetScale = SetScale,
     ResetScale = function() SetScale(DEFAULT_SCALE) end,
     ResetPosition = ResetPosition,
+    GetThresholds = GetThresholds,
+    SetThresholds = SetThresholds,
+    ResetThresholds = function()
+        SetThresholds(DEFAULT_RED_THRESHOLD, DEFAULT_YELLOW_THRESHOLD)
+    end,
 }
 
 -- Slash command
