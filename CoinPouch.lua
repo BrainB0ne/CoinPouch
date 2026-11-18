@@ -106,23 +106,23 @@ local function GetEquippedBagIcon(bag)
         end
     end
 
-    -- Prefer the equipped bag item's texture.
-    if inventorySlot and GetInventoryItemTexture then
-        local texture = GetInventoryItemTexture("player", inventorySlot)
-        if texture then return texture end
+    -- Empty equipment slots can have a placeholder texture (not nil).
+    -- Only accept an icon when a bag item is actually equipped.
+    if not inventorySlot or not GetInventoryItemID
+        or not GetInventoryItemID("player", inventorySlot) then
+        return nil
     end
 
-    -- The bag slot button itself may provide a texture on Retail.
-    local button = bag >= 1 and bag <= 4 and _G["CharacterBag" .. (bag - 1) .. "Slot"]
-    if button and button.icon and button.icon.GetTexture then
-        return button.icon:GetTexture()
+    if GetInventoryItemTexture then
+        local texture = GetInventoryItemTexture("player", inventorySlot)
+        if texture then return texture end
     end
 
     return nil
 end
 
 local function GetBagIcons()
-    local regularIcon = GetEquippedBagIcon(1)
+    local regularIcon
     local specialIcon
     local firstRegularIcon
     local firstSpecialIcon
@@ -134,9 +134,9 @@ local function GetBagIcons()
             local icon = GetEquippedBagIcon(bag)
             if family and family ~= 0 then
                 firstSpecialIcon = firstSpecialIcon or icon
-                if bag == 1 then regularIcon = nil end
             else
                 firstRegularIcon = firstRegularIcon or icon
+                if bag == 1 then regularIcon = icon end
             end
         end
     end
