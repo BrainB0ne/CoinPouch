@@ -19,6 +19,9 @@ CoinPouch is a lightweight, movable World of Warcraft addon that keeps your char
 - **Adjustable scale:** Resize the widget from 50% to 200% to suit your preferences. The selected scale is saved between sessions.
 - **In-game settings:** Customize the widget through WoW's built-in AddOns settings page.
 - **Customizable bag space thresholds:** Adjust the red and yellow warning thresholds in 1% increments through the in-game settings. Changes apply instantly and are saved between sessions.
+- **Special bag slots:** Displays a separate, color-coded free-slot counter for equipped profession and reagent bags, automatically hidden when no special bags are equipped.
+- **Equipped bag icons:** Shows the actual icons of your equipped regular and special bags instead of generic bag icons.
+- **Optional special bag counter:** Show or hide the special bag counter through the in-game settings. Your preference is saved between sessions.
 - **Easy reset options:** Restore the default scale or position independently with dedicated buttons.
 - **Shift-hover tooltip:** Hold **Shift** while hovering to see the addon version, free/total bag slots, free-space percentage, and controls.
 - **Responsive size:** The widget adjusts its width to fit the displayed values.

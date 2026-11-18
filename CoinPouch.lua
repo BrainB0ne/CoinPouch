@@ -51,22 +51,110 @@ local function GetAddonVersion()
     return version or "Unknown"
 end
 
+-- Keep general-purpose and special-purpose storage separate.
+-- The second return value is the bag-family mask (nonzero for specialty bags).
+-- Retail also has a dedicated reagent bag at container index 5.
 local function GetBagSlotInfo()
-    local freeSlots = 0
-    local totalSlots = 0
+    local regularFree, regularTotal = 0, 0
+    local specialFree, specialTotal = 0, 0
 
-    -- Backpack (0) and equipped bags (1-4)
     for bag = 0, 4 do
         local numSlots = C_Container.GetContainerNumSlots(bag)
-        local numFree = C_Container.GetContainerNumFreeSlots(bag)
-
-        if numSlots and numFree then
-            totalSlots = totalSlots + numSlots
-            freeSlots = freeSlots + numFree
+        local numFree, bagFamily = C_Container.GetContainerNumFreeSlots(bag)
+        if numSlots and numFree and numSlots > 0 then
+            if bagFamily and bagFamily ~= 0 then
+                specialFree = specialFree + numFree
+                specialTotal = specialTotal + numSlots
+            else
+                regularFree = regularFree + numFree
+                regularTotal = regularTotal + numSlots
+            end
         end
     end
 
-    return freeSlots, totalSlots
+    -- Container 5 is the reagent bag on Retail; older clients may not have it.
+    local reagentBag = (Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag)
+    if reagentBag then
+        local numSlots = C_Container.GetContainerNumSlots(reagentBag)
+        local numFree = C_Container.GetContainerNumFreeSlots(reagentBag)
+        if numSlots and numFree and numSlots > 0 then
+            specialFree = specialFree + numFree
+            specialTotal = specialTotal + numSlots
+        end
+    end
+
+    return regularFree, regularTotal, specialFree, specialTotal
+end
+
+-- Use equipped bag textures rather than fixed generic icons.
+-- Slot 1 is preferred for regular bags; Retail's reagent slot for special bags.
+local function GetEquippedBagIcon(bag)
+    -- Ask WoW for the actual inventory slot instead of assuming numeric IDs.
+    -- Fixed slot IDs can point at profession equipment on newer Retail clients.
+    local inventorySlot
+    if bag >= 1 and bag <= 4 then
+        if GetInventorySlotInfo then
+            inventorySlot = GetInventorySlotInfo("Bag" .. (bag - 1) .. "Slot")
+        end
+    elseif Enum and Enum.BagIndex and bag == Enum.BagIndex.ReagentBag then
+        if GetInventorySlotInfo then
+            -- Different client builds may expose the reagent bag under
+            -- different inventory slot names.
+            inventorySlot = GetInventorySlotInfo("ReagentBagSlot")
+                or GetInventorySlotInfo("ReagentBag0Slot")
+                or GetInventorySlotInfo("Bag4Slot")
+        end
+    end
+
+    -- Prefer the equipped bag item's texture.
+    if inventorySlot and GetInventoryItemTexture then
+        local texture = GetInventoryItemTexture("player", inventorySlot)
+        if texture then return texture end
+    end
+
+    -- The bag slot button itself may provide a texture on Retail.
+    local button = bag >= 1 and bag <= 4 and _G["CharacterBag" .. (bag - 1) .. "Slot"]
+    if button and button.icon and button.icon.GetTexture then
+        return button.icon:GetTexture()
+    end
+
+    return nil
+end
+
+local function GetBagIcons()
+    local regularIcon = GetEquippedBagIcon(1)
+    local specialIcon
+    local firstRegularIcon
+    local firstSpecialIcon
+
+    for bag = 1, 4 do
+        local slots = C_Container.GetContainerNumSlots(bag)
+        if slots and slots > 0 then
+            local _, family = C_Container.GetContainerNumFreeSlots(bag)
+            local icon = GetEquippedBagIcon(bag)
+            if family and family ~= 0 then
+                firstSpecialIcon = firstSpecialIcon or icon
+                if bag == 1 then regularIcon = nil end
+            else
+                firstRegularIcon = firstRegularIcon or icon
+            end
+        end
+    end
+
+    local reagentBag = Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag
+    if reagentBag then
+        local slots = C_Container.GetContainerNumSlots(reagentBag)
+        if slots and slots > 0 then
+            specialIcon = GetEquippedBagIcon(reagentBag)
+        end
+    end
+
+    return regularIcon or firstRegularIcon or "Interface\\Icons\\INV_Misc_Bag_08",
+           specialIcon or firstSpecialIcon or "Interface\\Icons\\INV_Misc_Bag_10"
+end
+
+local function ShowSpecialBags()
+    return not CoinPouchDB or CoinPouchDB.showSpecialBags ~= false
 end
 
 local function GetThresholds()
@@ -101,7 +189,7 @@ local function ShowCoinPouchTooltip()
 
     local version = GetAddonVersion()
 
-    local freeSlots, totalSlots = GetBagSlotInfo()
+    local freeSlots, totalSlots, specialFree, specialTotal = GetBagSlotInfo()
     local percentage = totalSlots > 0
         and (freeSlots / totalSlots * 100) or 0
 
@@ -119,6 +207,14 @@ local function ShowCoinPouchTooltip()
         ),
         1, 1, 1
     )
+
+    if ShowSpecialBags() and specialTotal > 0 then
+        local specialPercentage = specialFree / specialTotal * 100
+        GameTooltip:AddLine(string.format(
+            "Special bag space: %d / %d free (%.0f%%)",
+            specialFree, specialTotal, specialPercentage
+        ), 1, 1, 1)
+    end
 
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("Left-click: Toggle bags", 1, 1, 1)
@@ -275,16 +371,26 @@ local function UpdateMoney()
     local money = FormatMoney(GetMoney())
 
     -- Get inventory capacity
-    local freeSlots, totalSlots = GetBagSlotInfo()
+    local freeSlots, totalSlots, specialFree, specialTotal = GetBagSlotInfo()
     local bagColor = GetBagSlotColor(freeSlots, totalSlots)
+    local regularIcon, specialIcon = GetBagIcons()
 
     -- Format money and inventory display
     local display = string.format(
-        "%s  |c%s%d|r |TInterface\\Icons\\INV_Misc_Bag_08:14:14|t",
+        "%s  |c%s%d|r |T%s:14:14|t",
         money,
         bagColor,
-        freeSlots
+        freeSlots,
+        regularIcon
     )
+
+    if ShowSpecialBags() and specialTotal > 0 then
+        local specialColor = GetBagSlotColor(specialFree, specialTotal)
+        display = display .. string.format(
+            "  |c%s%d|r |T%s:14:14|t",
+            specialColor, specialFree, specialIcon
+        )
+    end
 
     moneyText:SetText(display)
 
@@ -299,6 +405,9 @@ end
 -- Initialize saved settings
 local function Initialize()
     CoinPouchDB = CoinPouchDB or {}
+    if CoinPouchDB.showSpecialBags == nil then
+        CoinPouchDB.showSpecialBags = true
+    end
 
     local red = tonumber(CoinPouchDB.redThreshold) or DEFAULT_RED_THRESHOLD
     local yellow = tonumber(CoinPouchDB.yellowThreshold) or DEFAULT_YELLOW_THRESHOLD
@@ -384,6 +493,12 @@ _G.CoinPouchAPI = {
     SetScale = SetScale,
     ResetScale = function() SetScale(DEFAULT_SCALE) end,
     ResetPosition = ResetPosition,
+    GetShowSpecialBags = ShowSpecialBags,
+    SetShowSpecialBags = function(enabled)
+        CoinPouchDB = CoinPouchDB or {}
+        CoinPouchDB.showSpecialBags = not not enabled
+        UpdateMoney()
+    end,
     GetThresholds = GetThresholds,
     SetThresholds = SetThresholds,
     ResetThresholds = function()
