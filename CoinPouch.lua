@@ -121,7 +121,15 @@ local function GetEquippedBagIcon(bag)
     return nil
 end
 
+local function UseEquippedBagIcons()
+    return not CoinPouchDB or CoinPouchDB.useEquippedBagIcons ~= false
+end
+
 local function GetBagIcons()
+    if not UseEquippedBagIcons() then
+        return "Interface\\Icons\\INV_Misc_Bag_08", "Interface\\Icons\\INV_Misc_Bag_10"
+    end
+
     local regularIcon
     local specialIcon
     local firstRegularIcon
@@ -408,6 +416,9 @@ local function Initialize()
     if CoinPouchDB.showSpecialBags == nil then
         CoinPouchDB.showSpecialBags = true
     end
+    if CoinPouchDB.useEquippedBagIcons == nil then
+        CoinPouchDB.useEquippedBagIcons = true
+    end
 
     local red = tonumber(CoinPouchDB.redThreshold) or DEFAULT_RED_THRESHOLD
     local yellow = tonumber(CoinPouchDB.yellowThreshold) or DEFAULT_YELLOW_THRESHOLD
@@ -493,6 +504,12 @@ _G.CoinPouchAPI = {
     SetScale = SetScale,
     ResetScale = function() SetScale(DEFAULT_SCALE) end,
     ResetPosition = ResetPosition,
+    GetUseEquippedBagIcons = UseEquippedBagIcons,
+    SetUseEquippedBagIcons = function(enabled)
+        CoinPouchDB = CoinPouchDB or {}
+        CoinPouchDB.useEquippedBagIcons = not not enabled
+        UpdateMoney()
+    end,
     GetShowSpecialBags = ShowSpecialBags,
     SetShowSpecialBags = function(enabled)
         CoinPouchDB = CoinPouchDB or {}

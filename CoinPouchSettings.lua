@@ -156,7 +156,7 @@ end)
 -- Special bag display preference.
 local specialLabel = content:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 specialLabel:SetPoint("TOPLEFT", resetThresholds, "BOTTOMLEFT", 0, -16)
-specialLabel:SetText("Special Bags")
+specialLabel:SetText("Bags")
 
 local specialCheck = CreateFrame("CheckButton", "CoinPouchSpecialBagsCheck", content, "UICheckButtonTemplate")
 specialCheck:SetPoint("TOPLEFT", specialLabel, "BOTTOMLEFT", -4, -5)
@@ -168,16 +168,28 @@ local specialCheckText = content:CreateFontString(nil, "ARTWORK", "GameFontHighl
 specialCheckText:SetPoint("LEFT", specialCheck, "RIGHT", 4, 0)
 specialCheckText:SetText("Show special bag slots")
 
+-- Keep both bag-display preferences together to avoid a scroll frame.
+local iconCheck = CreateFrame("CheckButton", "CoinPouchEquippedBagIconsCheck", content, "UICheckButtonTemplate")
+iconCheck:SetPoint("TOPLEFT", specialCheck, "BOTTOMLEFT", 0, -1)
+iconCheck:SetScript("OnClick", function(self)
+    api.SetUseEquippedBagIcons(self:GetChecked())
+end)
+
+local iconCheckText = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+iconCheckText:SetPoint("LEFT", iconCheck, "RIGHT", 4, 0)
+iconCheckText:SetText("Use equipped bag icons")
+
 local specialHelp = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-specialHelp:SetPoint("TOPLEFT", specialCheck, "BOTTOMLEFT", 4, -2)
+specialHelp:SetPoint("TOPLEFT", iconCheck, "BOTTOMLEFT", 4, -2)
 specialHelp:SetWidth(440)
 specialHelp:SetJustifyH("LEFT")
-specialHelp:SetText("Show a separate counter for profession and reagent bags when equipped.")
+specialHelp:SetText("Use default bag icons when unchecked; special slots appear only when equipped and enabled.")
 
 panel:SetScript("OnShow", function()
     RefreshScale()
     RefreshThresholds()
     specialCheck:SetChecked(api.GetShowSpecialBags())
+    iconCheck:SetChecked(api.GetUseEquippedBagIcons())
 end)
 
 if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
