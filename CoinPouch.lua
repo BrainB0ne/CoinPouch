@@ -100,8 +100,11 @@ local function GetEquippedBagIcon(bag)
         if GetInventorySlotInfo then
             -- Different client builds may expose the reagent bag under
             -- different inventory slot names.
+            ---@diagnostic disable-next-line: param-type-mismatch
             inventorySlot = GetInventorySlotInfo("ReagentBagSlot")
+                ---@diagnostic disable-next-line: param-type-mismatch
                 or GetInventorySlotInfo("ReagentBag0Slot")
+                ---@diagnostic disable-next-line: param-type-mismatch
                 or GetInventorySlotInfo("Bag4Slot")
         end
     end

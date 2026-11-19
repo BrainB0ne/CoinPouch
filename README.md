@@ -99,11 +99,22 @@ The local development setup uses VS Code build tasks and PowerShell to deploy Co
 1. Configure your local WoW AddOns directories in `Scripts/deploy.local.ps1`:
 
    ```powershell
+   [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+      'PSUseDeclaredVarsMoreThanAssignments',
+      'AddonPaths',
+      Justification = 'Configuration variable consumed by deployment scripts.'
+   )]
+   param()
+
    $AddonPaths = @{
-       Forever = "C:\Path\To\WoW\_forever_\Interface\AddOns"
-       Retail  = "C:\Path\To\WoW\_retail_\Interface\AddOns"
+      Forever = "C:\Path\To\WoW\_forever_\Interface\AddOns"
+      Retail  = "C:\Path\To\WoW\_retail_\Interface\AddOns"
    }
    ```
+
+   > **Note:** Replace the example paths with your actual WoW installation directories. The `Scripts/deploy.local.ps1` file contains machine-specific configuration and is excluded from Git.
+
+   > **Note:** The PSScriptAnalyzer suppression prevents an unused-variable warning because `$AddonPaths` is consumed by `deploy.ps1` rather than directly within the configuration file.
 
 2. In VS Code, press **Ctrl+Shift+B** to deploy to **WoW Forever** (the default build task).
 
