@@ -1,0 +1,76 @@
+name: Release CoinPouch
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Verify tag matches TOC version
+        shell: powershell
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $versionLine = Get-Content -LiteralPath 'CoinPouch.toc' | Where-Object {
+            $_ -match '^\s*##\s*Version\s*:'
+          } | Select-Object -First 1
+
+          if (-not $versionLine -or $versionLine -notmatch '^\s*##\s*Version\s*:\s*(\S+)\s*$') {
+            throw 'Missing or invalid Version entry in CoinPouch.toc'
+          }
+
+          $tocVersion = $Matches[1]
+          $expectedStableTag = "v$tocVersion"
+          $expectedBetaTag = "$expectedStableTag-beta"
+          if ($env:RELEASE_TAG -cne $expectedStableTag -and
+              $env:RELEASE_TAG -cne $expectedBetaTag) {
+            throw "Tag '$env:RELEASE_TAG' must be '$expectedStableTag' or '$expectedBetaTag'"
+          }
+
+          Write-Host "Validated $env:RELEASE_TAG against TOC version $tocVersion"
+
+      - name: Build release ZIP
+        shell: powershell
+        run: ./Scripts/package.ps1
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          # The packaging script uses the TOC version, not the Git tag suffix.
+          $tocVersion = (Select-String -Path 'CoinPouch.toc' -Pattern '^\s*##\s*Version\s*:\s*(\S+)\s*$' |
+            Select-Object -First 1).Matches.Groups[1].Value
+          $zipPath = Join-Path 'Releases' "CoinPouch-v$tocVersion.zip"
+
+          if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf)) {
+            throw "Expected release archive not found: $zipPath"
+          }
+
+          $releaseArgs = @(
+            'release', 'create', $env:RELEASE_TAG, $zipPath,
+            '--title', "CoinPouch $env:RELEASE_TAG",
+            '--generate-notes', '--verify-tag'
+          )
+
+          if ($env:RELEASE_TAG.EndsWith('-beta')) {
+            $releaseArgs += '--prerelease'
+          }
+
+          & gh @releaseArgs
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub release creation failed (exit code $LASTEXITCODE)"
+          }
