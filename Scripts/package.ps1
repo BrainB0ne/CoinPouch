@@ -49,6 +49,7 @@ if ((Test-Path -LiteralPath $zipPath) -and -not $Force) {
 # Build in a temporary staging directory to guarantee CoinPouch/ is the ZIP root.
 $staging = Join-Path ([System.IO.Path]::GetTempPath()) ("CoinPouch-package-" + [guid]::NewGuid().ToString('N'))
 $stagedAddon = Join-Path $staging $addonName
+$tempZipPath = Join-Path $releaseDirectory (".$addonName-v$version-" + [guid]::NewGuid().ToString('N') + ".zip")
 
 try {
     New-Item -ItemType Directory -Path $stagedAddon -Force | Out-Null
@@ -62,13 +63,32 @@ try {
     }
 
     New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
-    if (Test-Path -LiteralPath $zipPath) {
-        Remove-Item -LiteralPath $zipPath -Force
+    # Build the new archive separately so a compression failure cannot erase
+    # an existing release. The temporary ZIP is on the same volume as the target.
+    Compress-Archive -LiteralPath $stagedAddon -DestinationPath $tempZipPath -CompressionLevel Optimal
+
+    if (-not (Test-Path -LiteralPath $tempZipPath -PathType Leaf) -or
+        (Get-Item -LiteralPath $tempZipPath).Length -eq 0) {
+        throw "Packaging failed: temporary ZIP is missing or empty: $tempZipPath"
     }
-    Compress-Archive -LiteralPath $stagedAddon -DestinationPath $zipPath -CompressionLevel Optimal
+
+    # Atomically replace an existing ZIP, retaining the old one if replacement
+    # fails. On first release, simply move the completed ZIP into place.
+    if (Test-Path -LiteralPath $zipPath) {
+        if (-not $Force) {
+            throw "Release already exists: $zipPath (use -Force to overwrite)"
+        }
+        [System.IO.File]::Replace($tempZipPath, $zipPath, [NullString]::Value)
+    }
+    else {
+        Move-Item -LiteralPath $tempZipPath -Destination $zipPath
+    }
     Write-Host "Created: $zipPath" -ForegroundColor Green
 }
 finally {
+    if (Test-Path -LiteralPath $tempZipPath) {
+        Remove-Item -LiteralPath $tempZipPath -Force
+    }
     if (Test-Path -LiteralPath $staging) {
         Remove-Item -LiteralPath $staging -Recurse -Force
     }

@@ -92,20 +92,21 @@ local function GetEquippedBagIcon(bag)
     -- Ask WoW for the actual inventory slot instead of assuming numeric IDs.
     -- Fixed slot IDs can point at profession equipment on newer Retail clients.
     local inventorySlot
+    local getSlotInfo = (C_PaperDollInfo and C_PaperDollInfo.GetInventorySlotInfo) or GetInventorySlotInfo
     if bag >= 1 and bag <= 4 then
-        if GetInventorySlotInfo then
-            inventorySlot = GetInventorySlotInfo("Bag" .. (bag - 1) .. "Slot")
+        if getSlotInfo then
+            inventorySlot = getSlotInfo("Bag" .. (bag - 1) .. "Slot")
         end
     elseif Enum and Enum.BagIndex and bag == Enum.BagIndex.ReagentBag then
-        if GetInventorySlotInfo then
+        if getSlotInfo then
             -- Different client builds may expose the reagent bag under
             -- different inventory slot names.
             ---@diagnostic disable-next-line: param-type-mismatch
-            inventorySlot = GetInventorySlotInfo("ReagentBagSlot")
+            inventorySlot = getSlotInfo("ReagentBagSlot")
                 ---@diagnostic disable-next-line: param-type-mismatch
-                or GetInventorySlotInfo("ReagentBag0Slot")
+                or getSlotInfo("ReagentBag0Slot")
                 ---@diagnostic disable-next-line: param-type-mismatch
-                or GetInventorySlotInfo("Bag4Slot")
+                or getSlotInfo("Bag4Slot")
         end
     end
 
@@ -325,6 +326,8 @@ frame:SetScript("OnDragStop", function(self)
 
     CoinPouchDB.x = x
     CoinPouchDB.y = y
+    self:ClearAllPoints()
+    self:SetPoint("CENTER", UIParent, "CENTER", x, y)
     KeepOnScreen()
 end)
 
@@ -459,6 +462,9 @@ frame:SetScript("OnEvent", function(self, event, loadedAddon)
         self:UnregisterEvent("ADDON_LOADED")
     elseif event == "PLAYER_MONEY" or event == "BAG_UPDATE_DELAYED" then
         UpdateMoney()
+        if event == "BAG_UPDATE_DELAYED" and frame:IsMouseOver() and IsShiftKeyDown() then
+            ShowCoinPouchTooltip()
+        end
     elseif event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
         KeepOnScreen()
     elseif event == "MODIFIER_STATE_CHANGED" then
