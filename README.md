@@ -143,6 +143,8 @@ CoinPouch is free software licensed under the **GNU General Public License versi
 
 The GPL applies to the CoinPouch code and original project assets owned by the author; third-party World of Warcraft artwork, icons, and trademarks remain the property of their respective owners.
 
+Built with AI assistance.
+
 ---
 
 *CoinPouch is a community-made addon and is not affiliated with or endorsed by Blizzard Entertainment.*
