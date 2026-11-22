@@ -5,7 +5,7 @@
 CoinPouch is a lightweight, movable World of Warcraft addon that keeps your character's money and available bag space visible without opening your bags. Compatible with both **WoW Retail** and **WoW Forever**.
 
 **Author:** BrainByteZ  
-**Current project version:** 0.11.1
+**Current project version:** 0.12.0
 
 ![CoinPouch in World of Warcraft](Assets/CoinPouch-Transparant-256x256.png)
 
@@ -20,13 +20,28 @@ CoinPouch is a lightweight, movable World of Warcraft addon that keeps your char
 - **In-game settings:** Customize the widget through WoW's built-in AddOns settings page.
 - **Customizable bag space thresholds:** Adjust the red and yellow warning thresholds in 1% increments through the in-game settings. Changes apply instantly and are saved between sessions.
 - **Special bag slots:** Displays a separate, color-coded free-slot counter for equipped profession and reagent bags, automatically hidden when no special bags are equipped.
-- **Customizable bag icons** – Choose between your equipped bag icons and fixed default icons.
+- **Customizable bag icons:** Choose between your equipped bag icons and fixed default icons.
 - **Optional special bag counter:** Show or hide the special bag counter through the in-game settings. Your preference is saved between sessions.
 - **Easy reset options:** Restore the default scale or position independently with dedicated buttons.
 - **Shift-hover tooltip:** Hold **Shift** while hovering to see the addon version, free/total bag slots, free-space percentage, and controls.
 - **Responsive size:** The widget adjusts its width to fit the displayed values.
-- **Warcraft-inspired appearance:** Dark background, gold-toned border, hover highlight, and a custom addon icon.
+- **Appearance customization:** Choose from eight color themes and adjust background and border transparency.
 - **No dependencies.**
+
+## 🎨 Appearance Customization
+
+Make CoinPouch your own with customizable themes and transparency settings.
+
+- **8 color themes:** Classic Gold, Midnight, Emerald, Minimal, Candy Pink, Peach, Lavender, and Electric Blue.
+- **Background opacity:** Adjust transparency from 0% to 100%.
+- **Border opacity:** Independently control border transparency from 0% to 100%.
+- **Live preview:** Changes are applied immediately without reloading the UI.
+- **Persistent settings:** Your appearance preferences are saved between sessions.
+- **Reset Appearance:** Restore the original Classic Gold theme and default opacity settings.
+
+Find these options under **CoinPouch → Appearance** in the game's addon settings.
+
+The default Classic Gold theme preserves CoinPouch's original appearance.
 
 ## Screenshot
 
