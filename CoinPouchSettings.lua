@@ -43,13 +43,17 @@ _G[slider:GetName() .. "Text"]:SetText("")
 local valueLabel = content:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 valueLabel:SetPoint("LEFT", slider, "RIGHT", 18, 0)
 
+local refreshingScale = false
 local function RefreshScale()
     local value = api.GetScale()
+    refreshingScale = true
     slider:SetValue(value)
+    refreshingScale = false
     valueLabel:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
 end
 
 slider:SetScript("OnValueChanged", function(self, value)
+    if refreshingScale then return end
     value = math.floor(value * 20 + 0.5) / 20
     api.SetScale(value)
     valueLabel:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
@@ -293,7 +297,8 @@ local borderSlider, borderValue = MakeOpacitySlider(
 refreshAppearance = function()
     refreshingAppearance = true
     local selectedTheme = api.GetTheme() or "classic"
-    UIDropDownMenu_SetSelectedValue(themeDropdown, selectedTheme)
+    -- Update the closed dropdown without redrawing Blizzard's shared menu list.
+    themeDropdown.selectedValue = selectedTheme
     UIDropDownMenu_SetText(themeDropdown, ThemeLabel(selectedTheme))
     local background = api.GetBackgroundOpacity()
     local border = api.GetBorderOpacity()
