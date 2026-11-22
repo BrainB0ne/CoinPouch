@@ -28,7 +28,7 @@ CoinPouch is a lightweight, movable World of Warcraft addon that keeps your char
 - **Appearance customization:** Choose from eight color themes and adjust background and border transparency.
 - **No dependencies.**
 
-## 🎨 Appearance Customization
+## Appearance Customization
 
 Make CoinPouch your own with customizable themes and transparency settings.
 
