@@ -192,13 +192,158 @@ panel:SetScript("OnShow", function()
     iconCheck:SetChecked(api.GetUseEquippedBagIcons())
 end)
 
+-- Separate Appearance page: leave the main settings layout unchanged.
+local appearancePanel = CreateFrame("Frame", "CoinPouchAppearancePanel")
+appearancePanel.name = "Appearance"
+appearancePanel.parent = "CoinPouch" -- Legacy Interface Options subcategory.
+
+local appearanceTitle = appearancePanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+appearanceTitle:SetPoint("TOPLEFT", 20, -16)
+appearanceTitle:SetText("CoinPouch - Appearance")
+
+local appearanceDescription = appearancePanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+appearanceDescription:SetPoint("TOPLEFT", appearanceTitle, "BOTTOMLEFT", 0, -12)
+appearanceDescription:SetText("Choose a theme and adjust widget transparency.")
+
+local themeLabel = appearancePanel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+themeLabel:SetPoint("TOPLEFT", appearanceDescription, "BOTTOMLEFT", 0, -22)
+themeLabel:SetText("Widget Theme")
+
+-- A compact, expandable dropdown instead of a growing radio-button list.
+-- Built from basic WoW UI controls to work on both Retail and Forever.
+local themeOptions = {
+    { key = "classic", label = "Classic Gold" },
+    { key = "midnight", label = "Midnight" },
+    { key = "emerald", label = "Emerald" },
+    { key = "minimal", label = "Minimal" },
+    { key = "candyPink", label = "Candy Pink" },
+    { key = "peach", label = "Peach" },
+    { key = "lavender", label = "Lavender" },
+    { key = "electricBlue", label = "Electric Blue" },
+}
+local refreshingAppearance = false
+local refreshAppearance
+
+-- Use Blizzard's native dropdown rather than a custom button/menu.
+-- UIDropDownMenu is available in Forever and on Retail clients that retain
+-- the legacy dropdown API.
+local themeDropdown = CreateFrame("Frame", "CoinPouchThemeDropdown", appearancePanel, "UIDropDownMenuTemplate")
+themeDropdown:SetPoint("TOPLEFT", themeLabel, "BOTTOMLEFT", -16, -8)
+UIDropDownMenu_SetWidth(themeDropdown, 140)
+UIDropDownMenu_JustifyText(themeDropdown, "LEFT")
+
+local function ThemeLabel(key)
+    for _, option in ipairs(themeOptions) do
+        if option.key == key then return option.label end
+    end
+    return "Classic Gold"
+end
+
+UIDropDownMenu_Initialize(themeDropdown, function(self, level)
+    if level ~= 1 then return end
+    for _, option in ipairs(themeOptions) do
+        local info = UIDropDownMenu_CreateInfo()
+        info.text = option.label
+        info.value = option.key
+        info.checked = nil
+        info.func = function()
+            api.SetTheme(option.key)
+            UIDropDownMenu_SetSelectedValue(themeDropdown, option.key)
+            UIDropDownMenu_SetText(themeDropdown, option.label)
+            CloseDropDownMenus()
+        end
+        UIDropDownMenu_AddButton(info, level)
+    end
+end)
+
+local function MakeOpacitySlider(name, label, offsetY, getter, setter)
+    local labelText = appearancePanel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    -- Anchor to the common left margin, not to the dropdown template padding.
+    labelText:SetPoint("TOPLEFT", themeLabel, "BOTTOMLEFT", 0, offsetY)
+    labelText:SetText(label)
+
+    local control = CreateFrame("Slider", name, appearancePanel, "OptionsSliderTemplate")
+    control:SetPoint("TOPLEFT", labelText, "BOTTOMLEFT", 0, -17)
+    control:SetWidth(260)
+    control:SetMinMaxValues(0, 100)
+    control:SetValueStep(5)
+    if control.SetObeyStepOnDrag then control:SetObeyStepOnDrag(true) end
+    _G[name .. "Low"]:SetText("0%")
+    _G[name .. "High"]:SetText("100%")
+    _G[name .. "Text"]:SetText("")
+
+    local valueText = appearancePanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    valueText:SetPoint("LEFT", control, "RIGHT", 18, 0)
+    control:SetScript("OnValueChanged", function(self, value)
+        if refreshingAppearance then return end
+        local rounded = math.floor(value / 5 + 0.5) * 5
+        setter(rounded)
+        valueText:SetText(rounded .. "%")
+    end)
+    return control, valueText, getter
+end
+
+local backgroundSlider, backgroundValue = MakeOpacitySlider(
+    "CoinPouchBackgroundOpacitySlider", "Background Opacity", -66,
+    api.GetBackgroundOpacity, api.SetBackgroundOpacity)
+local borderSlider, borderValue = MakeOpacitySlider(
+    "CoinPouchBorderOpacitySlider", "Border Opacity", -136,
+    api.GetBorderOpacity, api.SetBorderOpacity)
+
+refreshAppearance = function()
+    refreshingAppearance = true
+    local selectedTheme = api.GetTheme() or "classic"
+    UIDropDownMenu_SetSelectedValue(themeDropdown, selectedTheme)
+    UIDropDownMenu_SetText(themeDropdown, ThemeLabel(selectedTheme))
+    local background = api.GetBackgroundOpacity()
+    local border = api.GetBorderOpacity()
+    backgroundSlider:SetValue(background)
+    borderSlider:SetValue(border)
+    backgroundValue:SetText(background .. "%")
+    borderValue:SetText(border .. "%")
+    refreshingAppearance = false
+end
+
+local resetAppearance = CreateFrame("Button", nil, appearancePanel, "UIPanelButtonTemplate")
+resetAppearance:SetSize(160, 26)
+resetAppearance:SetPoint("TOPLEFT", themeLabel, "BOTTOMLEFT", 0, -211)
+resetAppearance:SetText("Reset Appearance")
+resetAppearance:SetScript("OnClick", function()
+    api.ResetAppearance()
+    refreshAppearance()
+end)
+appearancePanel:SetScript("OnShow", refreshAppearance)
+
+-- SavedVariables are restored during ADDON_LOADED. Do not initialize the
+-- dropdown at file load time: it could display Classic Gold before the saved
+-- theme is available, especially when the panel is already shown.
+local appearanceEvents = CreateFrame("Frame")
+appearanceEvents:RegisterEvent("ADDON_LOADED")
+appearanceEvents:SetScript("OnEvent", function(self, event, loadedAddon)
+    if loadedAddon == "CoinPouch" then
+        -- Retail may not invoke OnShow when opening an already-visible
+        -- canvas panel. Synchronize both pages after SavedVariables load.
+        RefreshScale()
+        RefreshThresholds()
+        specialCheck:SetChecked(api.GetShowSpecialBags())
+        iconCheck:SetChecked(api.GetUseEquippedBagIcons())
+        refreshAppearance()
+        self:UnregisterEvent("ADDON_LOADED")
+    end
+end)
+
 if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
     local category = Settings.RegisterCanvasLayoutCategory(panel, "CoinPouch")
     Settings.RegisterAddOnCategory(category)
+    if Settings.RegisterCanvasLayoutSubcategory then
+        local appearanceCategory = Settings.RegisterCanvasLayoutSubcategory(category, appearancePanel, "Appearance")
+        Settings.RegisterAddOnCategory(appearanceCategory)
+    end
 
     -- Make the registered category available to slash commands.
     api.settingsCategoryID = category:GetID()
 
 elseif InterfaceOptions_AddCategory then
     InterfaceOptions_AddCategory(panel)
+    InterfaceOptions_AddCategory(appearancePanel)
 end

@@ -7,6 +7,26 @@ local MIN_SCALE = 0.5
 local MAX_SCALE = 2.0
 local DEFAULT_RED_THRESHOLD = 10
 local DEFAULT_YELLOW_THRESHOLD = 25
+local DEFAULT_THEME = "classic"
+local DEFAULT_BACKGROUND_OPACITY = 85
+local DEFAULT_BORDER_OPACITY = 100
+
+-- The classic preset reproduces the existing widget colors exactly.
+local THEMES = {
+    classic = { background = { 0.05, 0.05, 0.05 }, border = { 0.65, 0.52, 0.30 }, hover = { 1, 0.82, 0.35 } },
+    midnight = { background = { 0.10, 0.11, 0.15 }, border = { 0.42, 0.49, 0.60 }, hover = { 0.65, 0.77, 0.95 } },
+    emerald = { background = { 0.07, 0.14, 0.10 }, border = { 0.29, 0.60, 0.40 }, hover = { 0.52, 0.85, 0.62 } },
+    minimal = { background = { 0.07, 0.07, 0.09 }, border = { 0.34, 0.34, 0.40 }, hover = { 0.67, 0.67, 0.73 } },
+    candyPink = { background = { 0.25, 0.07, 0.19 }, border = { 0.98, 0.38, 0.72 }, hover = { 1.00, 0.67, 0.87 } },
+    peach = { background = { 0.28, 0.13, 0.12 }, border = { 1.00, 0.61, 0.45 }, hover = { 1.00, 0.79, 0.63 } },
+    lavender = { background = { 0.17, 0.10, 0.27 }, border = { 0.70, 0.49, 0.98 }, hover = { 0.84, 0.70, 1.00 } },
+    electricBlue = { background = { 0.04, 0.14, 0.25 }, border = { 0.20, 0.79, 1.00 }, hover = { 0.55, 0.92, 1.00 } },
+}
+
+local function ClampOpacity(value, default)
+    value = tonumber(value) or default
+    return math.max(0, math.min(100, math.floor(value + 0.5)))
+end
 
 local frame = CreateFrame(
     "Frame",
@@ -33,11 +53,17 @@ frame:SetBackdrop({
     }
 })
 
--- Dark background
-frame:SetBackdropColor(0.05, 0.05, 0.05, 0.85)
+local function ApplyAppearance()
+    local db = CoinPouchDB or {}
+    local theme = THEMES[db.theme] or THEMES[DEFAULT_THEME]
+    local backgroundAlpha = ClampOpacity(db.backgroundOpacity, DEFAULT_BACKGROUND_OPACITY) / 100
+    local borderAlpha = ClampOpacity(db.borderOpacity, DEFAULT_BORDER_OPACITY) / 100
+    frame:SetBackdropColor(theme.background[1], theme.background[2], theme.background[3], backgroundAlpha)
+    local border = frame:IsMouseOver() and theme.hover or theme.border
+    frame:SetBackdropBorderColor(border[1], border[2], border[3], borderAlpha)
+end
 
--- Subtle golden border
-frame:SetBackdropBorderColor(0.65, 0.52, 0.30, 1)
+ApplyAppearance()
 
 local function GetAddonVersion()
     local version
@@ -236,12 +262,12 @@ local function ShowCoinPouchTooltip()
 end
 
 frame:SetScript("OnEnter", function(self)
-    self:SetBackdropBorderColor(1, 0.82, 0.35, 1)
+    ApplyAppearance()
     ShowCoinPouchTooltip()
 end)
 
 frame:SetScript("OnLeave", function(self)
-    self:SetBackdropBorderColor(0.65, 0.52, 0.30, 1)
+    ApplyAppearance()
     GameTooltip:Hide()
 end)
 
@@ -419,6 +445,12 @@ end
 -- Initialize saved settings
 local function Initialize()
     CoinPouchDB = CoinPouchDB or {}
+    if not THEMES[CoinPouchDB.theme] then
+        CoinPouchDB.theme = DEFAULT_THEME
+    end
+    CoinPouchDB.backgroundOpacity = ClampOpacity(CoinPouchDB.backgroundOpacity, DEFAULT_BACKGROUND_OPACITY)
+    CoinPouchDB.borderOpacity = ClampOpacity(CoinPouchDB.borderOpacity, DEFAULT_BORDER_OPACITY)
+    ApplyAppearance()
     if CoinPouchDB.showSpecialBags == nil then
         CoinPouchDB.showSpecialBags = true
     end
@@ -513,6 +545,36 @@ _G.CoinPouchAPI = {
     SetScale = SetScale,
     ResetScale = function() SetScale(DEFAULT_SCALE) end,
     ResetPosition = ResetPosition,
+    GetTheme = function() return CoinPouchDB and CoinPouchDB.theme or DEFAULT_THEME end,
+    SetTheme = function(theme)
+        if not THEMES[theme] then return end
+        CoinPouchDB = CoinPouchDB or {}
+        CoinPouchDB.theme = theme
+        ApplyAppearance()
+    end,
+    GetBackgroundOpacity = function()
+        return ClampOpacity(CoinPouchDB and CoinPouchDB.backgroundOpacity, DEFAULT_BACKGROUND_OPACITY)
+    end,
+    SetBackgroundOpacity = function(value)
+        CoinPouchDB = CoinPouchDB or {}
+        CoinPouchDB.backgroundOpacity = ClampOpacity(value, DEFAULT_BACKGROUND_OPACITY)
+        ApplyAppearance()
+    end,
+    GetBorderOpacity = function()
+        return ClampOpacity(CoinPouchDB and CoinPouchDB.borderOpacity, DEFAULT_BORDER_OPACITY)
+    end,
+    SetBorderOpacity = function(value)
+        CoinPouchDB = CoinPouchDB or {}
+        CoinPouchDB.borderOpacity = ClampOpacity(value, DEFAULT_BORDER_OPACITY)
+        ApplyAppearance()
+    end,
+    ResetAppearance = function()
+        CoinPouchDB = CoinPouchDB or {}
+        CoinPouchDB.theme = DEFAULT_THEME
+        CoinPouchDB.backgroundOpacity = DEFAULT_BACKGROUND_OPACITY
+        CoinPouchDB.borderOpacity = DEFAULT_BORDER_OPACITY
+        ApplyAppearance()
+    end,
     GetUseEquippedBagIcons = UseEquippedBagIcons,
     SetUseEquippedBagIcons = function(enabled)
         CoinPouchDB = CoinPouchDB or {}

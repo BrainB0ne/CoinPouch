@@ -2,7 +2,7 @@
 ## Title: CoinPouch
 ## Notes: Your gold and bag space at a glance
 ## Author: BrainByteZ
-## Version: 0.11.1
+## Version: 0.12.0
 ## SavedVariables: CoinPouchDB
 ## IconTexture: Interface\AddOns\CoinPouch\Media\CoinPouch
 
